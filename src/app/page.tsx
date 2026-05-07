@@ -117,6 +117,18 @@ function formatReset(resetAt?: string) {
   return resetAt;
 }
 
+function isUsageStore(value: unknown): value is UsageStore {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  if (!("providers" in record)) return false;
+  return typeof record.providers === "object" && record.providers !== null;
+}
+
+function toUsageStore(value: unknown): UsageStore {
+  if (isUsageStore(value)) return value;
+  return { updatedAt: null, providers: {} };
+}
+
 export default function Home() {
   const [store, setStore] = useState<UsageStore>({ updatedAt: null, providers: {} });
   const [loading, setLoading] = useState(true);
@@ -128,7 +140,11 @@ export default function Home() {
 
   async function refresh() {
     const response = await fetch("/api/ingest", { cache: "no-store" });
-    setStore(await response.json());
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error((payload as { error?: string } | null)?.error ?? "refresh failed");
+    }
+    setStore(toUsageStore(payload));
     setLoading(false);
   }
 
@@ -139,7 +155,8 @@ export default function Home() {
       setLoading(false);
     });
     events.addEventListener("usage", (message) => {
-      setStore(JSON.parse((message as MessageEvent<string>).data));
+      const payload = JSON.parse((message as MessageEvent<string>).data);
+      setStore(toUsageStore(payload));
       setStreamStatus("live");
       setLoading(false);
     });
@@ -161,7 +178,7 @@ export default function Home() {
         return;
       }
       if (event.data.type === "AI_USAGE_STORE_SYNC" && event.data.store) {
-        setStore(event.data.store);
+        setStore(toUsageStore(event.data.store));
         setLoading(false);
       }
     }
