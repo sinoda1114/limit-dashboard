@@ -6,7 +6,7 @@ Cursor / Codex / Claude の利用状況を 1 画面で確認するための Next
 
 ## スクリーンショット
 
-AI 使用量メーターのダッシュボード画面
+![AI 使用量メーターのダッシュボード画面](./assets/dashboard-screenshot.png)
 
 ## 主な機能
 
