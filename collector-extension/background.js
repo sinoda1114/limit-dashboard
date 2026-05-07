@@ -10,6 +10,7 @@ const OPENED_TAB_KEY = "aiUsageOpenedTabs";
 const LAST_COMMAND_KEY = "aiUsageLastCommandId";
 const STORE_KEY = "aiUsageStore";
 const DEFAULT_DASHBOARD_BASE_URL = "http://127.0.0.1:43177";
+let latestStore = { updatedAt: null, providers: {} };
 
 async function getCollectorConfig() {
   const stored = await chrome.storage.local.get(["dashboardBaseUrl", "ingestToken"]);
@@ -31,6 +32,12 @@ chrome.runtime.onInstalled.addListener(() => {
   });
   void refreshAllUsagePages();
 });
+
+void getLocalUsageStore()
+  .then((store) => {
+    latestStore = store;
+  })
+  .catch(() => {});
 
 chrome.runtime.onStartup.addListener(() => {
   chrome.alarms.create(AUTO_REFRESH_ALARM, {
@@ -61,10 +68,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message?.type === "AI_USAGE_GET_STORE") {
-    void getLocalUsageStore()
-      .then((store) => sendResponse({ ok: true, store }))
-      .catch((error) => sendResponse({ ok: false, error: String(error) }));
-    return true;
+    sendResponse({ ok: true, store: latestStore });
+    return;
   }
 
   if (message?.type === "AI_USAGE_SNAPSHOT") {
@@ -97,6 +102,7 @@ async function saveLocalSnapshot(snapshot) {
     },
   };
   await chrome.storage.local.set({ [STORE_KEY]: next });
+  latestStore = next;
   return next;
 }
 
