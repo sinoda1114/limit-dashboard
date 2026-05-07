@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Usage Collector Settings</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #11120f;
+        color: #f3f0e8;
+      }
+
+      body {
+        margin: 0;
+        padding: 28px;
+      }
+
+      main {
+        max-width: 680px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 24px;
+      }
+
+      p {
+        color: #b8b09f;
+        line-height: 1.6;
+      }
+
+      label {
+        display: block;
+        margin-top: 18px;
+        font-weight: 700;
+      }
+
+      input {
+        box-sizing: border-box;
+        width: 100%;
+        margin-top: 8px;
+        border: 1px solid #3c3c31;
+        border-radius: 6px;
+        background: #1b1c16;
+        color: #fffaf0;
+        padding: 11px 12px;
+        font: inherit;
+      }
+
+      button {
+        margin-top: 22px;
+        border: 0;
+        border-radius: 6px;
+        background: #e6c06f;
+        color: #17140d;
+        font-weight: 800;
+        padding: 10px 14px;
+        cursor: pointer;
+      }
+
+      .note {
+        margin-top: 18px;
+        border: 1px solid #3a3327;
+        border-radius: 6px;
+        background: #201d17;
+        padding: 12px;
+        color: #c8b99c;
+        font-size: 13px;
+      }
+
+      #status {
+        margin-left: 12px;
+        color: #9ed6a5;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>AI Usage Collector</h1>
+      <p>Vercelにデプロイした場合は、Dashboard URLと送信用トークンをここに保存します。</p>
+
+      <label for="dashboardBaseUrl">Dashboard URL</label>
+      <input id="dashboardBaseUrl" placeholder="https://your-project.vercel.app" />
+
+      <label for="ingestToken">Collector Token</label>
+      <input id="ingestToken" type="password" autocomplete="off" placeholder="COLLECTOR_INGEST_TOKEN" />
+
+      <button id="save" type="button">保存</button>
+      <span id="status" role="status"></span>
+
+      <div class="note">
+        ローカル開発ではDashboard URLを空にすると <code>http://127.0.0.1:43177</code> を使います。
+        トークンはVercel側の環境変数 <code>COLLECTOR_INGEST_TOKEN</code> と同じ値にしてください。
+      </div>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>
