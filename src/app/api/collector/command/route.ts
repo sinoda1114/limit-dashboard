@@ -4,20 +4,27 @@ import {
   getCollectorCommand,
   updateCollectorStatus,
 } from "@/lib/collector-command";
-import { isAuthorizedCollector } from "@/lib/collector-auth";
+import {
+  corsHeadersForDashboard,
+  isAllowedDashboardOrigin,
+  isAuthorizedCollector,
+} from "@/lib/collector-auth";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-  "Access-Control-Allow-Headers": "authorization,content-type",
-};
-
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: corsHeaders });
+export async function OPTIONS(request: NextRequest) {
+  if (!isAllowedDashboardOrigin(request, false)) {
+    return new NextResponse(null, { status: 403, headers: corsHeadersForDashboard(request) });
+  }
+  return new NextResponse(null, { status: 204, headers: corsHeadersForDashboard(request) });
 }
 
-export async function GET() {
-  return NextResponse.json(await getCollectorCommand(), { headers: corsHeaders });
+export async function GET(request: NextRequest) {
+  if (!isAuthorizedCollector(request)) {
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401, headers: corsHeadersForDashboard(request) }
+    );
+  }
+  return NextResponse.json(await getCollectorCommand(), { headers: corsHeadersForDashboard(request) });
 }
 
 export async function POST(request: NextRequest) {
@@ -25,7 +32,10 @@ export async function POST(request: NextRequest) {
 
   if (body?.type === "status") {
     if (!isAuthorizedCollector(request)) {
-      return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401, headers: corsHeaders });
+      return NextResponse.json(
+        { ok: false, error: "unauthorized" },
+        { status: 401, headers: corsHeadersForDashboard(request) }
+      );
     }
 
     return NextResponse.json(
@@ -37,9 +47,19 @@ export async function POST(request: NextRequest) {
           message: body.message ?? "Collector status updated.",
         }),
       },
-      { headers: corsHeaders }
+      { headers: corsHeadersForDashboard(request) }
     );
   }
 
-  return NextResponse.json({ ok: true, ...(await createCollectorCommand()) }, { headers: corsHeaders });
+  if (!isAllowedDashboardOrigin(request, false) && !isAuthorizedCollector(request)) {
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401, headers: corsHeadersForDashboard(request) }
+    );
+  }
+
+  return NextResponse.json(
+    { ok: true, ...(await createCollectorCommand()) },
+    { headers: corsHeadersForDashboard(request) }
+  );
 }

@@ -1,3 +1,5 @@
+import { NextRequest, NextResponse } from "next/server";
+import { corsHeadersForDashboard, isAllowedDashboardOrigin } from "@/lib/collector-auth";
 import { readUsageStore } from "@/lib/usage-store";
 import { subscribeUsage } from "@/lib/usage-events";
 
@@ -13,7 +15,14 @@ function heartbeat() {
   return encoder.encode(`event: ping\ndata: {}\n\n`);
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  if (!isAllowedDashboardOrigin(request, false)) {
+    return NextResponse.json(
+      { ok: false, error: "origin is not allowed" },
+      { status: 403, headers: corsHeadersForDashboard(request) }
+    );
+  }
+
   let unsubscribe = () => {};
   let heartbeatId: ReturnType<typeof setInterval> | undefined;
 
@@ -41,6 +50,7 @@ export async function GET() {
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
       "X-Accel-Buffering": "no",
+      ...corsHeadersForDashboard(request),
     },
   });
 }

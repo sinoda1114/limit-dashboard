@@ -1,5 +1,9 @@
+const DEFAULT_DASHBOARD_BASE_URL = "http://127.0.0.1:43177";
+let dashboardOrigin = null;
+
 function postToDashboard(message) {
-  window.postMessage({ source: "AI_USAGE_COLLECTOR_EXTENSION", ...message }, "*");
+  if (!dashboardOrigin) return;
+  window.postMessage({ source: "AI_USAGE_COLLECTOR_EXTENSION", ...message }, dashboardOrigin);
 }
 
 function syncStore() {
@@ -10,11 +14,21 @@ function syncStore() {
   });
 }
 
-postToDashboard({ type: "AI_USAGE_BRIDGE_READY" });
-syncStore();
+function initBridge() {
+  chrome.storage.local.get(["dashboardBaseUrl"], (stored) => {
+    const dashboardBaseUrl = String(stored.dashboardBaseUrl || DEFAULT_DASHBOARD_BASE_URL).replace(/\/$/, "");
+    const configuredOrigin = new URL(dashboardBaseUrl).origin;
+    if (window.location.origin !== configuredOrigin) return;
+
+    dashboardOrigin = configuredOrigin;
+    postToDashboard({ type: "AI_USAGE_BRIDGE_READY" });
+    syncStore();
+  });
+}
 
 window.addEventListener("message", (event) => {
   if (event.source !== window) return;
+  if (dashboardOrigin && event.origin !== dashboardOrigin) return;
   if (event.data?.source !== "AI_USAGE_DASHBOARD") return;
   if (event.data?.type !== "AI_USAGE_REFRESH_NOW") return;
 
@@ -44,3 +58,5 @@ chrome.runtime.onMessage.addListener((message) => {
     });
   }
 });
+
+initBridge();

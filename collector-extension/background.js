@@ -125,7 +125,10 @@ async function refreshAllUsagePages() {
 async function checkCommandAndRefresh() {
   try {
     const config = await getCollectorConfig();
-    const response = await fetch(`${config.dashboardBaseUrl}/api/collector/command`, { cache: "no-store" });
+    const response = await fetch(`${config.dashboardBaseUrl}/api/collector/command`, {
+      cache: "no-store",
+      headers: authHeaders(config),
+    });
     const payload = await response.json();
     const commandId = payload.command?.id;
     if (!commandId) return;
