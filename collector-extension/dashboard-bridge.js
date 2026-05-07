@@ -27,8 +27,9 @@ function initBridge() {
 }
 
 window.addEventListener("message", (event) => {
+  if (!dashboardOrigin) return;
   if (event.source !== window) return;
-  if (dashboardOrigin && event.origin !== dashboardOrigin) return;
+  if (event.origin !== dashboardOrigin) return;
   if (event.data?.source !== "AI_USAGE_DASHBOARD") return;
   if (event.data?.type !== "AI_USAGE_REFRESH_NOW") return;
 

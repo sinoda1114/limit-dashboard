@@ -27,6 +27,16 @@ export function isAllowedDashboardOrigin(request: NextRequest, allowMissingOrigi
   return dashboardOrigins().has(origin);
 }
 
+export function isAllowedDashboardReferer(request: NextRequest) {
+  const referer = request.headers.get("referer");
+  if (!referer) return false;
+  try {
+    return dashboardOrigins().has(new URL(referer).origin);
+  } catch {
+    return false;
+  }
+}
+
 export function isAllowedCollectorOrigin(request: NextRequest, allowMissingOrigin = true) {
   const origin = request.headers.get("origin");
   if (!origin) return allowMissingOrigin;

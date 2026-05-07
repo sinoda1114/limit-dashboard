@@ -29,6 +29,15 @@ type IngestBody = {
 
 const ALLOWED_PROVIDERS = new Set<ProviderId>(["cursor", "codex", "claude"]);
 const MAX_RAW_TEXT_LENGTH = 4000;
+const MAX_URL_LENGTH = 2048;
+const MAX_TITLE_LENGTH = 256;
+const MAX_PLAN_LENGTH = 256;
+const MAX_DIAGNOSTIC_LENGTH = 1024;
+const ALLOWED_SOURCES = new Set<ProviderSnapshot["source"]>(["web-collector", "claude-statusline"]);
+
+function sanitizeString(value: unknown, maxLength: number) {
+  return typeof value === "string" ? value.slice(0, maxLength) : undefined;
+}
 
 export async function OPTIONS(request: NextRequest) {
   if (!isAllowedCollectorOrigin(request, false)) {
@@ -80,10 +89,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const source =
+      typeof rawBody.source === "string" && ALLOWED_SOURCES.has(rawBody.source as ProviderSnapshot["source"])
+        ? (rawBody.source as ProviderSnapshot["source"])
+        : undefined;
+    const metrics = Array.isArray(rawBody.metrics) ? (rawBody.metrics as UsageMetric[]) : undefined;
+
     const body: IngestBody = {
-      ...rawBody,
       provider: rawBody.provider as ProviderId | undefined,
-      rawText: typeof rawBody.rawText === "string" ? rawBody.rawText.slice(0, MAX_RAW_TEXT_LENGTH) : undefined,
+      source,
+      url: sanitizeString(rawBody.url, MAX_URL_LENGTH),
+      title: sanitizeString(rawBody.title, MAX_TITLE_LENGTH),
+      plan: sanitizeString(rawBody.plan, MAX_PLAN_LENGTH),
+      diagnostic: sanitizeString(rawBody.diagnostic, MAX_DIAGNOSTIC_LENGTH),
+      rawText: sanitizeString(rawBody.rawText, MAX_RAW_TEXT_LENGTH),
+      metrics,
     };
     const provider = body.provider ?? inferProvider(body.url);
 
@@ -94,7 +114,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const metrics =
+    const parsedMetrics =
       body.metrics?.filter((metric) => metric.usedPercentage == null || Number.isFinite(metric.usedPercentage)) ??
       (body.rawText ? parseWebMetrics(provider, body.rawText) : []);
 
@@ -106,12 +126,12 @@ export async function POST(request: NextRequest) {
       title: body.title,
       plan: body.plan,
       collectedAt: new Date().toISOString(),
-      metrics,
-      status: metrics.length > 0 ? "ok" : "no-metrics",
+      metrics: parsedMetrics,
+      status: parsedMetrics.length > 0 ? "ok" : "no-metrics",
       diagnostic:
         body.diagnostic ??
-        (metrics.length > 0
-          ? `${metrics.length} metric(s) collected`
+        (parsedMetrics.length > 0
+          ? `${parsedMetrics.length} metric(s) collected`
           : `Collector reached page, but no usage percentages were detected. rawText length: ${
               body.rawText?.length ?? 0
             }`),

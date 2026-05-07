@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { corsHeadersForDashboard, isAllowedDashboardOrigin } from "@/lib/collector-auth";
+import {
+  corsHeadersForDashboard,
+  isAllowedDashboardOrigin,
+  isAllowedDashboardReferer,
+} from "@/lib/collector-auth";
 import { readUsageStore } from "@/lib/usage-store";
 import { subscribeUsage } from "@/lib/usage-events";
 
@@ -16,7 +20,8 @@ function heartbeat() {
 }
 
 export async function GET(request: NextRequest) {
-  if (!isAllowedDashboardOrigin(request, false)) {
+  // EventSource may omit Origin, so we fallback to Referer.
+  if (!isAllowedDashboardOrigin(request, false) && !isAllowedDashboardReferer(request)) {
     return NextResponse.json(
       { ok: false, error: "origin is not allowed" },
       { status: 403, headers: corsHeadersForDashboard(request) }
