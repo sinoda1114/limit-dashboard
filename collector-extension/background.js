@@ -171,7 +171,22 @@ async function openOrFocusCollectorTab(url) {
     return;
   }
 
-  const tab = await chrome.tabs.create({ url, active: false });
+  let tab;
+  try {
+    tab = await chrome.tabs.create({ url, active: false });
+  } catch (error) {
+    const message = String(error);
+    if (!message.includes("No current window")) throw error;
+
+    const normalWindows = await chrome.windows.getAll({ populate: false, windowTypes: ["normal"] }).catch(() => []);
+
+    if (normalWindows.length === 0) {
+      const createdWindow = await chrome.windows.create({ url, focused: false });
+      tab = createdWindow.tabs?.[0];
+    } else {
+      tab = await chrome.tabs.create({ url, active: false, windowId: normalWindows[0].id });
+    }
+  }
   if (tab.id) await rememberOpenedTab(tab.id);
 
   setTimeout(() => {

@@ -1,10 +1,35 @@
 const DEFAULT_DASHBOARD_BASE_URL = "http://127.0.0.1:43177";
+let collectorAlive = true;
+let observer = null;
+let warnedUnauthorized = false;
+
+window.addEventListener("unhandledrejection", (event) => {
+  const reason = String(event.reason?.message || event.reason || "");
+  if (reason.includes("A listener indicated an asynchronous response by returning true")) {
+    event.preventDefault();
+    return;
+  }
+  if (!reason.includes("Extension context invalidated")) return;
+  event.preventDefault();
+  stopCollector("unhandled rejection: context invalidated");
+});
 
 async function getCollectorConfig() {
   const stored = await chrome.storage.local.get(["dashboardBaseUrl", "ingestToken"]);
   const dashboardBaseUrl = String(stored.dashboardBaseUrl || DEFAULT_DASHBOARD_BASE_URL).replace(/\/$/, "");
   const ingestToken = String(stored.ingestToken || "");
   return { dashboardBaseUrl, ingestToken };
+}
+
+function isContextInvalidatedError(error) {
+  return String(error?.message || error || "").includes("Extension context invalidated");
+}
+
+function stopCollector(reason) {
+  if (!collectorAlive) return;
+  collectorAlive = false;
+  observer?.disconnect();
+  console.info("[AI Usage Collector] stopped collector loop:", reason);
 }
 
 function providerFromLocation() {
@@ -213,10 +238,20 @@ function showBadge(ok, message) {
 }
 
 async function sendSnapshot() {
+  if (!collectorAlive) return;
   const provider = providerFromLocation();
   if (!provider) return;
 
-  const config = await getCollectorConfig();
+  let config;
+  try {
+    config = await getCollectorConfig();
+  } catch (error) {
+    if (isContextInvalidatedError(error)) {
+      stopCollector("getCollectorConfig failed: context invalidated");
+      return;
+    }
+    throw error;
+  }
   const metrics = metricsFromBars(provider);
   const snapshot = {
     provider,
@@ -233,10 +268,16 @@ async function sendSnapshot() {
         : `Collector ran on ${document.title}, but no metric matched`,
   };
 
-  chrome.runtime?.sendMessage?.({
-    type: "AI_USAGE_SNAPSHOT",
-    snapshot,
-  });
+  chrome.runtime
+    ?.sendMessage?.({
+      type: "AI_USAGE_SNAPSHOT",
+      snapshot,
+    })
+    ?.catch((error) => {
+      if (isContextInvalidatedError(error)) {
+        stopCollector("snapshot message rejected: context invalidated");
+      }
+    });
 
   const headers = { "content-type": "application/json" };
   if (config.ingestToken) headers.authorization = `Bearer ${config.ingestToken}`;
@@ -249,29 +290,50 @@ async function sendSnapshot() {
     });
 
     if (!response.ok) {
-      console.warn("[AI Usage Collector] ingest failed", response.status, await response.text());
+      if (response.status === 401) {
+        if (!warnedUnauthorized) {
+          warnedUnauthorized = true;
+          console.warn("[AI Usage Collector] ingest failed 401 unauthorized. Check Collector Token setting.");
+        }
+      } else {
+        console.warn("[AI Usage Collector] ingest failed", response.status, await response.text());
+      }
     }
   } catch (error) {
     console.warn("[AI Usage Collector] ingest skipped", error);
   }
 
   showBadge(metrics.length > 0, `Usage collector: ${metrics.length} metric(s) saved`);
-  chrome.runtime?.sendMessage?.({
-    type: "AI_USAGE_COLLECTED",
-    provider,
-    metricsCount: metrics.length,
-    url: window.location.href,
-  });
+  chrome.runtime
+    ?.sendMessage?.({
+      type: "AI_USAGE_COLLECTED",
+      provider,
+      metricsCount: metrics.length,
+      url: window.location.href,
+    })
+    ?.catch((error) => {
+      if (isContextInvalidatedError(error)) {
+        stopCollector("collected message rejected: context invalidated");
+      }
+    });
 }
 
 let timer = 0;
 function scheduleSend() {
+  if (!collectorAlive) return;
   window.clearTimeout(timer);
-  timer = window.setTimeout(sendSnapshot, 1200);
+  timer = window.setTimeout(() => {
+    void sendSnapshot().catch((error) => {
+      if (isContextInvalidatedError(error)) {
+        stopCollector("sendSnapshot rejected: context invalidated");
+      }
+    });
+  }, 1200);
 }
 
 scheduleSend();
-new MutationObserver(scheduleSend).observe(document.body, {
+observer = new MutationObserver(scheduleSend);
+observer.observe(document.body, {
   childList: true,
   subtree: true,
   characterData: true,

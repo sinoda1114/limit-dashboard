@@ -79,7 +79,12 @@ function renderStore(store) {
 }
 
 async function loadStore() {
-  const response = await chrome.runtime.sendMessage({ type: "AI_USAGE_GET_STORE" });
+  const response = await chrome.runtime.sendMessage({ type: "AI_USAGE_GET_STORE" }).catch((error) => {
+    if (String(error?.message || error).includes("Extension context invalidated")) {
+      throw new Error("拡張が更新されました。拡張を再読み込みしてください。");
+    }
+    throw error;
+  });
   if (!response?.ok) {
     throw new Error(response?.error || "ストア取得に失敗しました");
   }

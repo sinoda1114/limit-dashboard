@@ -8,6 +8,7 @@ function postToDashboard(message) {
 
 function syncStore() {
   chrome.runtime.sendMessage({ type: "AI_USAGE_GET_STORE" }, (response) => {
+    if (chrome.runtime.lastError) return;
     if (response?.ok) {
       postToDashboard({ type: "AI_USAGE_STORE_SYNC", store: response.store });
     }
@@ -34,6 +35,7 @@ window.addEventListener("message", (event) => {
   if (event.data?.type !== "AI_USAGE_REFRESH_NOW") return;
 
   chrome.runtime.sendMessage({ type: "AI_USAGE_REFRESH_NOW" }, (response) => {
+    if (chrome.runtime.lastError) return;
     postToDashboard({
       type: "AI_USAGE_REFRESH_ACK",
       ok: Boolean(response?.ok),

@@ -129,6 +129,16 @@ function toUsageStore(value: unknown): UsageStore {
   return { updatedAt: null, providers: {} };
 }
 
+function storeUpdatedAtMs(store: UsageStore) {
+  if (!store.updatedAt) return 0;
+  const ms = new Date(store.updatedAt).getTime();
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+function pickNewerStore(current: UsageStore, incoming: UsageStore) {
+  return storeUpdatedAtMs(incoming) >= storeUpdatedAtMs(current) ? incoming : current;
+}
+
 export default function Home() {
   const [store, setStore] = useState<UsageStore>({ updatedAt: null, providers: {} });
   const [loading, setLoading] = useState(true);
@@ -144,11 +154,20 @@ export default function Home() {
     if (!response.ok) {
       throw new Error((payload as { error?: string } | null)?.error ?? "refresh failed");
     }
-    setStore(toUsageStore(payload));
+    const incoming = toUsageStore(payload);
+    setStore((current) => pickNewerStore(current, incoming));
     setLoading(false);
   }
 
   useEffect(() => {
+    function onUnhandledRejection(event: PromiseRejectionEvent) {
+      const reason = event.reason as { message?: string; stack?: string } | string | undefined;
+      const message = String((typeof reason === "string" ? reason : reason?.message) ?? "");
+      if (!message.includes("A listener indicated an asynchronous response by returning true")) return;
+    }
+
+    window.addEventListener("unhandledrejection", onUnhandledRejection);
+
     const events = new EventSource("/api/events");
     events.addEventListener("open", () => {
       setStreamStatus("live");
@@ -156,7 +175,8 @@ export default function Home() {
     });
     events.addEventListener("usage", (message) => {
       const payload = JSON.parse((message as MessageEvent<string>).data);
-      setStore(toUsageStore(payload));
+      const incoming = toUsageStore(payload);
+      setStore((current) => pickNewerStore(current, incoming));
       setStreamStatus("live");
       setLoading(false);
     });
@@ -165,6 +185,7 @@ export default function Home() {
       void refresh();
     });
     return () => {
+      window.removeEventListener("unhandledrejection", onUnhandledRejection);
       events.close();
     };
   }, []);
@@ -178,7 +199,8 @@ export default function Home() {
         return;
       }
       if (event.data.type === "AI_USAGE_STORE_SYNC" && event.data.store) {
-        setStore(toUsageStore(event.data.store));
+        const incoming = toUsageStore(event.data.store);
+        setStore((current) => pickNewerStore(current, incoming));
         setLoading(false);
       }
     }
