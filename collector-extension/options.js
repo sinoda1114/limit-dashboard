@@ -5,17 +5,42 @@ const ingestTokenInput = document.getElementById("ingestToken");
 const statusEl = document.getElementById("status");
 
 async function load() {
-  const stored = await chrome.storage.local.get(["dashboardBaseUrl", "ingestToken"]);
-  dashboardBaseUrlInput.value = stored.dashboardBaseUrl || DEFAULT_DASHBOARD_BASE_URL;
+  const stored = await chrome.storage.local.get(["dashboardBaseUrl", "dashboardBaseUrls", "ingestToken"]);
+  const urls = normalizeDashboardUrls(stored.dashboardBaseUrls, stored.dashboardBaseUrl);
+  dashboardBaseUrlInput.value = urls.join("\n");
   ingestTokenInput.value = stored.ingestToken || "";
 }
 
+function parseDashboardUrls(rawValue) {
+  return Array.from(
+    new Set(
+      String(rawValue || "")
+        .split(/[\n,]/)
+        .map((value) => value.trim().replace(/\/$/, ""))
+        .filter(Boolean)
+    )
+  );
+}
+
+function normalizeDashboardUrls(maybeList, maybeSingle) {
+  const fromList = Array.isArray(maybeList)
+    ? maybeList.map((value) => String(value).trim().replace(/\/$/, "")).filter(Boolean)
+    : [];
+  if (fromList.length > 0) return Array.from(new Set(fromList));
+
+  const fallback = String(maybeSingle || DEFAULT_DASHBOARD_BASE_URL).trim().replace(/\/$/, "");
+  return [fallback];
+}
+
 async function save() {
-  const dashboardBaseUrl = dashboardBaseUrlInput.value.trim().replace(/\/$/, "");
+  const parsedUrls = parseDashboardUrls(dashboardBaseUrlInput.value);
+  const dashboardBaseUrls = parsedUrls.length > 0 ? parsedUrls : [DEFAULT_DASHBOARD_BASE_URL];
+  const dashboardBaseUrl = dashboardBaseUrls[0];
   const ingestToken = ingestTokenInput.value.trim();
 
   await chrome.storage.local.set({
-    dashboardBaseUrl: dashboardBaseUrl || DEFAULT_DASHBOARD_BASE_URL,
+    dashboardBaseUrl,
+    dashboardBaseUrls,
     ingestToken,
   });
 

@@ -15,10 +15,19 @@ window.addEventListener("unhandledrejection", (event) => {
 });
 
 async function getCollectorConfig() {
-  const stored = await chrome.storage.local.get(["dashboardBaseUrl", "ingestToken"]);
-  const dashboardBaseUrl = String(stored.dashboardBaseUrl || DEFAULT_DASHBOARD_BASE_URL).replace(/\/$/, "");
+  const stored = await chrome.storage.local.get(["dashboardBaseUrl", "dashboardBaseUrls", "ingestToken"]);
+  const dashboardBaseUrls = normalizeDashboardUrls(stored.dashboardBaseUrls, stored.dashboardBaseUrl);
   const ingestToken = String(stored.ingestToken || "");
-  return { dashboardBaseUrl, ingestToken };
+  return { dashboardBaseUrls, ingestToken };
+}
+
+function normalizeDashboardUrls(maybeList, maybeSingle) {
+  const fromList = Array.isArray(maybeList)
+    ? maybeList.map((value) => String(value).trim().replace(/\/$/, "")).filter(Boolean)
+    : [];
+  if (fromList.length > 0) return Array.from(new Set(fromList));
+  const fallback = String(maybeSingle || DEFAULT_DASHBOARD_BASE_URL).trim().replace(/\/$/, "");
+  return [fallback];
 }
 
 function isContextInvalidatedError(error) {
@@ -282,25 +291,27 @@ async function sendSnapshot() {
   const headers = { "content-type": "application/json" };
   if (config.ingestToken) headers.authorization = `Bearer ${config.ingestToken}`;
 
-  try {
-    const response = await fetch(`${config.dashboardBaseUrl}/api/ingest`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(snapshot),
-    });
+  for (const dashboardBaseUrl of config.dashboardBaseUrls) {
+    try {
+      const response = await fetch(`${dashboardBaseUrl}/api/ingest`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(snapshot),
+      });
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        if (!warnedUnauthorized) {
-          warnedUnauthorized = true;
-          console.warn("[AI Usage Collector] ingest failed 401 unauthorized. Check Collector Token setting.");
+      if (!response.ok) {
+        if (response.status === 401) {
+          if (!warnedUnauthorized) {
+            warnedUnauthorized = true;
+            console.warn("[AI Usage Collector] ingest failed 401 unauthorized. Check Collector Token setting.");
+          }
+        } else {
+          console.warn("[AI Usage Collector] ingest failed", response.status, await response.text());
         }
-      } else {
-        console.warn("[AI Usage Collector] ingest failed", response.status, await response.text());
       }
+    } catch (error) {
+      console.warn("[AI Usage Collector] ingest skipped", error);
     }
-  } catch (error) {
-    console.warn("[AI Usage Collector] ingest skipped", error);
   }
 
   showBadge(metrics.length > 0, `Usage collector: ${metrics.length} metric(s) saved`);

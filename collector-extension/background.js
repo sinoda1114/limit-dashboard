@@ -13,10 +13,19 @@ const DEFAULT_DASHBOARD_BASE_URL = "http://127.0.0.1:43177";
 let latestStore = { updatedAt: null, providers: {} };
 
 async function getCollectorConfig() {
-  const stored = await chrome.storage.local.get(["dashboardBaseUrl", "ingestToken"]);
-  const dashboardBaseUrl = String(stored.dashboardBaseUrl || DEFAULT_DASHBOARD_BASE_URL).replace(/\/$/, "");
+  const stored = await chrome.storage.local.get(["dashboardBaseUrl", "dashboardBaseUrls", "ingestToken"]);
+  const dashboardBaseUrls = normalizeDashboardUrls(stored.dashboardBaseUrls, stored.dashboardBaseUrl);
   const ingestToken = String(stored.ingestToken || "");
-  return { dashboardBaseUrl, ingestToken };
+  return { dashboardBaseUrl: dashboardBaseUrls[0], dashboardBaseUrls, ingestToken };
+}
+
+function normalizeDashboardUrls(maybeList, maybeSingle) {
+  const fromList = Array.isArray(maybeList)
+    ? maybeList.map((value) => String(value).trim().replace(/\/$/, "")).filter(Boolean)
+    : [];
+  if (fromList.length > 0) return Array.from(new Set(fromList));
+  const fallback = String(maybeSingle || DEFAULT_DASHBOARD_BASE_URL).trim().replace(/\/$/, "");
+  return [fallback];
 }
 
 function authHeaders(config) {

@@ -37,7 +37,8 @@
         font-weight: 700;
       }
 
-      input {
+      input,
+      textarea {
         box-sizing: border-box;
         width: 100%;
         margin-top: 8px;
@@ -47,6 +48,11 @@
         color: #fffaf0;
         padding: 11px 12px;
         font: inherit;
+      }
+
+      textarea {
+        min-height: 74px;
+        resize: vertical;
       }
 
       button {
@@ -81,8 +87,8 @@
       <h1>AI Usage Collector</h1>
       <p>Vercelにデプロイした場合は、Dashboard URLと送信用トークンをここに保存します。</p>
 
-      <label for="dashboardBaseUrl">Dashboard URL</label>
-      <input id="dashboardBaseUrl" placeholder="https://your-project.vercel.app" />
+      <label for="dashboardBaseUrl">Dashboard URL（複数可）</label>
+      <textarea id="dashboardBaseUrl" placeholder="http://127.0.0.1:43177&#10;https://your-project.vercel.app"></textarea>
 
       <label for="ingestToken">Collector Token</label>
       <input id="ingestToken" type="password" autocomplete="off" placeholder="COLLECTOR_INGEST_TOKEN" />
@@ -91,7 +97,8 @@
       <span id="status" role="status"></span>
 
       <div class="note">
-        ローカル開発ではDashboard URLを空にすると <code>http://127.0.0.1:43177</code> を使います。
+        Dashboard URL は改行またはカンマ区切りで複数設定できます（例: ローカル + Vercel）。
+        空の場合は <code>http://127.0.0.1:43177</code> を使います。
         トークンはVercel側の環境変数 <code>COLLECTOR_INGEST_TOKEN</code> と同じ値にしてください。
       </div>
     </main>

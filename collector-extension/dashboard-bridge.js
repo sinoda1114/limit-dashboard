@@ -1,6 +1,15 @@
 const DEFAULT_DASHBOARD_BASE_URL = "http://127.0.0.1:43177";
 let dashboardOrigin = null;
 
+function normalizeDashboardUrls(maybeList, maybeSingle) {
+  const fromList = Array.isArray(maybeList)
+    ? maybeList.map((value) => String(value).trim().replace(/\/$/, "")).filter(Boolean)
+    : [];
+  if (fromList.length > 0) return Array.from(new Set(fromList));
+  const fallback = String(maybeSingle || DEFAULT_DASHBOARD_BASE_URL).trim().replace(/\/$/, "");
+  return [fallback];
+}
+
 function postToDashboard(message) {
   if (!dashboardOrigin) return;
   window.postMessage({ source: "AI_USAGE_COLLECTOR_EXTENSION", ...message }, dashboardOrigin);
@@ -16,12 +25,18 @@ function syncStore() {
 }
 
 function initBridge() {
-  chrome.storage.local.get(["dashboardBaseUrl"], (stored) => {
-    const dashboardBaseUrl = String(stored.dashboardBaseUrl || DEFAULT_DASHBOARD_BASE_URL).replace(/\/$/, "");
-    const configuredOrigin = new URL(dashboardBaseUrl).origin;
-    if (window.location.origin !== configuredOrigin) return;
+  chrome.storage.local.get(["dashboardBaseUrl", "dashboardBaseUrls"], (stored) => {
+    const dashboardBaseUrls = normalizeDashboardUrls(stored.dashboardBaseUrls, stored.dashboardBaseUrl);
+    const configuredOrigins = dashboardBaseUrls.map((baseUrl) => {
+      try {
+        return new URL(baseUrl).origin;
+      } catch {
+        return null;
+      }
+    }).filter(Boolean);
+    if (!configuredOrigins.includes(window.location.origin)) return;
 
-    dashboardOrigin = configuredOrigin;
+    dashboardOrigin = window.location.origin;
     postToDashboard({ type: "AI_USAGE_BRIDGE_READY" });
     syncStore();
   });
