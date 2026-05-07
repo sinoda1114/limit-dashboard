@@ -4,6 +4,7 @@ import {
   corsHeadersForDashboard,
   isAllowedCollectorOrigin,
   isAllowedDashboardOrigin,
+  isAllowedDashboardReferer,
   isAuthorizedCollector,
 } from "@/lib/collector-auth";
 import type { ProviderId, ProviderSnapshot, UsageMetric } from "@/lib/usage-types";
@@ -48,7 +49,9 @@ export async function OPTIONS(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  if (!isAllowedDashboardOrigin(request, false) && !isAuthorizedCollector(request)) {
+  // Browser fetch to same-origin may omit Origin header, so allow dashboard Referer as fallback.
+  const isDashboardRequest = isAllowedDashboardOrigin(request, false) || isAllowedDashboardReferer(request);
+  if (!isDashboardRequest && !isAuthorizedCollector(request)) {
     return NextResponse.json(
       { ok: false, error: "unauthorized" },
       { status: 401, headers: corsHeadersForDashboard(request) }

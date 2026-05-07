@@ -1,0 +1,36 @@
+name: Release Chrome Extension
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read extension version
+        id: version
+        run: |
+          EXT_VERSION=$(node -p "require('./collector-extension/manifest.json').version")
+          echo "value=${EXT_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Build extension zip
+        run: |
+          mkdir -p dist
+          cd collector-extension
+          zip -r "../dist/ai-usage-collector-v${{ steps.version.outputs.value }}.zip" . \
+            -x "*.DS_Store" "*__MACOSX*"
+
+      - name: Create GitHub release and upload asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/ai-usage-collector-v${{ steps.version.outputs.value }}.zip
+          generate_release_notes: true

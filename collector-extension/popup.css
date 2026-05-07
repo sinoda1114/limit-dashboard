@@ -1,0 +1,120 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font: 13px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #e7edf4;
+  background: #0f1720;
+}
+
+.app {
+  width: 360px;
+  min-height: 320px;
+  padding: 12px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.header p {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: #9aa8b8;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+button {
+  border: 1px solid #36557a;
+  background: #183659;
+  color: #d9ebff;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #204877;
+}
+
+button.secondary {
+  border-color: #39485b;
+  background: #222f3d;
+  color: #d6deea;
+}
+
+.status {
+  margin-top: 10px;
+  min-height: 20px;
+  font-size: 12px;
+  color: #b8c7d9;
+}
+
+.providers {
+  display: grid;
+  gap: 10px;
+}
+
+.provider {
+  border: 1px solid #263341;
+  background: #131e29;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.provider h2 {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.metric {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.metric:last-child {
+  margin-bottom: 0;
+}
+
+.line {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: #d7e2ef;
+}
+
+.meta {
+  color: #9bb0c7;
+  font-size: 11px;
+}
+
+.bar {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: #263341;
+  overflow: hidden;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #4ea1ff, #70d6ff);
+}
+
+.empty {
+  color: #9fb0c5;
+  border: 1px dashed #2e4052;
+  border-radius: 10px;
+  padding: 12px;
+}

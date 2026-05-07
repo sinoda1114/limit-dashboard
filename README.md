@@ -92,10 +92,19 @@ UPSTASH_REDIS_REST_TOKEN=...
   - ローカル: `http://127.0.0.1:43177`
   - Vercel: `https://your-project.vercel.app`
 7. `Collector Token` は `COLLECTOR_INGEST_TOKEN` と同じ値を設定（本番推奨）
-8. 以下のページでログイン状態を確認
+8. 拡張アイコンをクリックし、ポップアップの「今すぐ巡回」で収集を実行
+9. 以下のページでログイン状態を確認
   - `https://cursor.com/ja/dashboard/spending`
   - `https://chatgpt.com/codex/cloud/settings/analytics#usage`
   - `https://claude.ai/settings/usage`
+
+## 配布方針（GitHub 先行）
+
+Chrome 拡張の配布は、まず GitHub Releases で運用します。  
+タグ push により `collector-extension` の zip が自動生成されます。
+
+- ワークフロー: `.github/workflows/release-extension.yml`
+- 手順詳細: `docs/distribution.md`
 
 ## Claude Code status line 連携（任意）
 
