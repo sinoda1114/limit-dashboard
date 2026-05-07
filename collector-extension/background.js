@@ -49,16 +49,15 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "AI_USAGE_REFRESH_NOW") {
-    void refreshAllUsagePages()
-      .then(() => sendResponse({ ok: true, urls: USAGE_URLS }))
-      .catch((error) => sendResponse({ ok: false, error: String(error) }));
+    sendResponse({ ok: true, started: true, urls: USAGE_URLS });
+    void refreshAllUsagePages().catch(() => {});
     if (sender.tab?.id) {
       void chrome.tabs.sendMessage(sender.tab.id, {
         type: "AI_USAGE_REFRESH_STARTED",
         urls: USAGE_URLS,
       });
     }
-    return true;
+    return;
   }
 
   if (message?.type === "AI_USAGE_GET_STORE") {
@@ -69,13 +68,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message?.type === "AI_USAGE_SNAPSHOT") {
+    sendResponse({ ok: true, accepted: true });
     void saveLocalSnapshot(message.snapshot)
       .then((store) => {
         broadcastStore(store);
-        sendResponse({ ok: true, store });
       })
-      .catch((error) => sendResponse({ ok: false, error: String(error) }));
-    return true;
+      .catch(() => {});
+    return;
   }
 
   if (message?.type !== "AI_USAGE_COLLECTED" || !sender.tab?.id) return;
