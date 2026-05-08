@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AI Usage Collector Settings</title>
+    <title>AI Usage Monitor Settings</title>
     <style>
       :root {
         color-scheme: dark;
@@ -80,11 +80,66 @@
         margin-left: 12px;
         color: #9ed6a5;
       }
+
+      .provider-settings {
+        margin-top: 18px;
+        border: 1px solid #3a3327;
+        border-radius: 8px;
+        padding: 12px;
+        background: #181610;
+      }
+
+      .provider-settings h2 {
+        margin: 0 0 8px;
+        font-size: 15px;
+      }
+
+      .provider-row {
+        display: grid;
+        grid-template-columns: 120px 1fr 70px;
+        gap: 10px;
+        align-items: center;
+        margin-top: 8px;
+      }
+
+      .provider-row input[type="number"] {
+        margin-top: 0;
+      }
+
+      .provider-row label {
+        margin: 0;
+        font-weight: 500;
+      }
+
+      #orderValidationWarning {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 6px;
+        border: 1px solid #6b3a3a;
+        background: #2a1818;
+        color: #f0b4b4;
+        font-size: 13px;
+        display: none;
+      }
+
+      #orderValidationWarning.is-visible {
+        display: block;
+      }
+
+      input.input-error {
+        border-color: #a04545 !important;
+        outline-color: #a04545;
+      }
+
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
     </style>
   </head>
   <body>
     <main>
-      <h1>AI Usage Collector</h1>
+      <h1>AI Usage Monitor</h1>
       <p>Vercelにデプロイした場合は、Dashboard URLと送信用トークンをここに保存します。</p>
 
       <label for="dashboardBaseUrl">Dashboard URL（複数可）</label>
@@ -92,6 +147,26 @@
 
       <label for="ingestToken">Collector Token</label>
       <input id="ingestToken" type="password" autocomplete="off" placeholder="COLLECTOR_INGEST_TOKEN" />
+
+      <section class="provider-settings">
+        <h2>ポップアップ表示設定</h2>
+        <div class="provider-row">
+          <strong>Cursor</strong>
+          <label><input id="showCursor" type="checkbox" checked /> 表示する</label>
+          <input id="orderCursor" type="number" min="1" step="1" value="1" />
+        </div>
+        <div class="provider-row">
+          <strong>Codex</strong>
+          <label><input id="showCodex" type="checkbox" checked /> 表示する</label>
+          <input id="orderCodex" type="number" min="1" step="1" value="2" />
+        </div>
+        <div class="provider-row">
+          <strong>Claude</strong>
+          <label><input id="showClaude" type="checkbox" checked /> 表示する</label>
+          <input id="orderClaude" type="number" min="1" step="1" value="3" />
+        </div>
+        <div id="orderValidationWarning" role="alert"></div>
+      </section>
 
       <button id="save" type="button">保存</button>
       <span id="status" role="status"></span>

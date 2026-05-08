@@ -47,7 +47,7 @@ const providers: Array<{
 
 function usedLabel(metric: UsageMetric) {
   if (metric.usedPercentage == null) return metric.detail ?? "不明";
-  return `${metric.usedPercentage}% 使用済み`;
+  return `${metric.usedPercentage}%`;
 }
 
 function metricLabelJa(label: string) {

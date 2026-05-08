@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "AI Usage Collector",
+  "name": "AI Usage Monitor",
   "version": "0.1.0",
   "description": "Collect visible subscription usage from Cursor, Codex, and Claude pages into the local dashboard.",
   "icons": {
@@ -17,7 +17,7 @@
       "128": "icons/icon-128.png"
     },
     "default_popup": "popup.html",
-    "default_title": "AI Usage Collector"
+    "default_title": "AI Usage Monitor"
   },
   "options_page": "options.html",
   "permissions": ["alarms", "storage", "tabs"],

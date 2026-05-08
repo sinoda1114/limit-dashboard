@@ -155,9 +155,9 @@ function metricsFromBars(provider) {
 
     const claudeDesign =
       text.match(/Claude\s*Design\s+([^%]{0,220}?)(\d{1,3})\s*%\s*(?:使用済み|used|使用)/i) ??
-      text.match(/Claude\s*Design[^0-9]{0,180}(\d{1,3})\s*%\s*(?:使用済み|used|使用)/i);
+      text.match(/Claude\s*Design([^%]{0,220}?)(\d{1,3})\s*%\s*(?:使用済み|used|使用)/i);
     if (claudeDesign) {
-      const usedPercentage = Number(claudeDesign[2] ?? claudeDesign[1]);
+      const usedPercentage = Number(claudeDesign[2]);
       pushMetric(metrics, provider, "Claude Design", usedPercentage, resetFromSection(claudeDesign[1]));
     }
 

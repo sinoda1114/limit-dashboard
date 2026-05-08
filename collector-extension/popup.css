@@ -26,10 +26,17 @@ body {
   color: #9aa8b8;
 }
 
+.header-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .actions {
   display: flex;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 0;
 }
 
 button {
@@ -69,11 +76,28 @@ button.secondary {
   background: #131e29;
   border-radius: 10px;
   padding: 10px;
+  border-left-width: 4px;
 }
 
 .provider h2 {
   margin: 0 0 8px;
   font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.provider-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .metric {
@@ -90,7 +114,21 @@ button.secondary {
   display: flex;
   justify-content: space-between;
   gap: 8px;
+  align-items: baseline;
   color: #d7e2ef;
+}
+
+.line-main {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.line-sub {
+  color: #9bb0c7;
+  font-size: 11px;
 }
 
 .meta {
@@ -110,6 +148,30 @@ button.secondary {
   display: block;
   height: 100%;
   background: linear-gradient(90deg, #4ea1ff, #70d6ff);
+}
+
+.provider-cursor {
+  border-left-color: #6ec1ff;
+}
+
+.provider-codex {
+  border-left-color: #9f8cff;
+}
+
+.provider-claude {
+  border-left-color: #ffb36c;
+}
+
+.provider-cursor .bar span {
+  background: linear-gradient(90deg, #4ea1ff, #70d6ff);
+}
+
+.provider-codex .bar span {
+  background: linear-gradient(90deg, #8f77ff, #b29bff);
+}
+
+.provider-claude .bar span {
+  background: linear-gradient(90deg, #ff9b55, #ffca7f);
 }
 
 .empty {

@@ -3,20 +3,21 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AI Usage Collector</title>
+    <title>AI Usage Monitor</title>
     <link rel="stylesheet" href="./popup.css" />
   </head>
   <body>
     <main class="app">
       <header class="header">
-        <h1>AI Usage Collector</h1>
+        <div class="header-main">
+          <h1>AI Usage Monitor</h1>
+          <section class="actions">
+            <button id="refreshNow" type="button">更新</button>
+            <button id="openOptions" type="button" class="secondary">設定</button>
+          </section>
+        </div>
         <p id="updatedAt">最終更新: --</p>
       </header>
-
-      <section class="actions">
-        <button id="refreshNow" type="button">今すぐ巡回</button>
-        <button id="openOptions" type="button" class="secondary">設定</button>
-      </section>
 
       <section>
         <div id="status" class="status"></div>
