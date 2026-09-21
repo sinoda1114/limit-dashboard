@@ -30,7 +30,7 @@ jobs:
             -x "*.DS_Store" "*__MACOSX*"
 
       - name: Create GitHub release and upload asset
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: dist/ai-usage-collector-v${{ steps.version.outputs.value }}.zip
           generate_release_notes: true
